@@ -1,0 +1,176 @@
+openapi: 3.0.0
+info:
+  title: Fedora Account Service JSON API
+  description: fajson rest api
+  version: 0.0.1
+  license:
+    name: GPLv3
+    url: https://www.gnu.org/licenses/quick-guide-gplv3.en.html
+servers:
+  - url: https://httpbin.org
+    description: default
+
+paths:
+  /ip:
+    get:
+      operationId: ip
+      responses:
+        "default":
+          $ref: "#/components/responses/Error"
+        "200":
+          description: requester identity info
+          content:
+            application/json:
+              examples:
+                success:
+                  value:
+                    result:
+                      raw: "dn: krbprincipalname=http/fasjson.example.test@example.test,cn=services,cn=accounts,dc=example,dc=test"
+                      info:
+                        cn:
+                          - services
+                          - accounts
+                        dc:
+                          - example
+                          - test
+                        krbprincipalname: http/fasjson.example.test@example.test
+              schema:
+                type: object
+                properties:
+                  result:
+                    $ref: "#/components/schemas/identity"
+components:
+  securitySchemes:
+    default:
+      type: apiKey
+      in: header
+      name: Authorization
+  responses:
+    Error:
+      description: unexpected error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                $ref: "#/components/schemas/error"
+  schemas:
+    identity:
+      type: object
+      properties:
+        raw:
+          type: string
+        info:
+          type: object
+    user_ref:
+      type: object
+      properties:
+        uid:
+          type: string
+    user_ref_list:
+      type: array
+      items:
+        $ref: "#/components/schemas/user_ref"
+    user_ref_page:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/user_ref_list"
+        pagination:
+          type: object
+          properties:
+            current:
+              type: integer
+            previous:
+              type: integer
+            next:
+              type: integer
+    user:
+      type: object
+      properties:
+        login:
+          type: string
+        surname:
+          type: string
+        givenname:
+          type: string
+        mails:
+          type: array
+          items:
+            type: string
+        ircnick:
+          type: string
+        locale:
+          type: string
+        timezone:
+          type: string
+        gpgkeyids:
+          type: array
+          items:
+            type: string
+        creationts:
+          type: string
+        locked:
+          type: boolean
+    group:
+      type: object
+      properties:
+        cn:
+          type: string
+    groups:
+      type: array
+      items:
+        $ref: "#/components/schemas/group"
+    group_page:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/groups"
+        pagination:
+          type: object
+          properties:
+            current:
+              type: integer
+            previous:
+              type: integer
+            next:
+              type: integer
+    error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        data:
+          type: object
+  links:
+    UserProfile:
+      operationId: getUserInfo
+      parameters:
+        username: $response.body#/result/u
+    GroupPaging:
+      operationId: queryGroups
+      parameters:
+        previous:
+          operationId: queryGroups
+          page: $response.body#/result/pagination/previous
+          per_page: $request.query.per_page
+          query: $request.query.query
+        current:
+          operationId: queryGroups
+          page: $response.body#/result/pagination/current
+          per_page: $request.query.per_page
+          query: $request.query.query
+        next:
+          operationId: queryGroups
+          page: $response.body#/result/pagination/next
+          per_page: $request.query.per_page
+          query: $request.query.query
+
+security:
+  - default: []  

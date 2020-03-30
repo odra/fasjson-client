@@ -1,0 +1,1 @@
+from fasjson_client import client
